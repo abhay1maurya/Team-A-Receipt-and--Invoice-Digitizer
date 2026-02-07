@@ -1,6 +1,5 @@
 __pycache__/
 *.pyc
-*.db
-receipt_invoice.db
+
 data/raw/
 .env

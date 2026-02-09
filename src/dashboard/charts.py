@@ -9,9 +9,7 @@ All charts use a consistent theme, interactive tooltips, and responsive layouts.
 import plotly.graph_objects as go
 
 
-# -------------------------------------------------------------------
 # THEME & COLOR PALETTE
-# -------------------------------------------------------------------
 
 COLORS = {
     "primary": "#4361ee",

@@ -395,7 +395,7 @@ def page_dashboard():
             if not monthly_df.empty:
                 st.plotly_chart(
                     dashboard_charts.monthly_spending_line(monthly_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Total spending by month. Look for peaks to spot high-cost periods.")
             else:
@@ -404,7 +404,7 @@ def page_dashboard():
             if not monthly_counts_df.empty:
                 st.plotly_chart(
                     dashboard_charts.monthly_transactions_bar(monthly_counts_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("How many bills you had each month.")
             else:
@@ -415,21 +415,21 @@ def page_dashboard():
             if not monthly_tax_df.empty:
                 st.plotly_chart(
                     dashboard_charts.tax_vs_subtotal_bar(monthly_tax_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Breakdown of subtotal vs tax for each month.")
         with chart_col_b:
             if not monthly_df.empty:
                 st.plotly_chart(
                     dashboard_charts.cumulative_spending_line(monthly_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Running total of spending over time.")
 
         # Year-over-year (only shows if data spans multiple years)
         yoy_fig = dashboard_charts.yoy_comparison(filtered_df)
         if yoy_fig.data:
-            st.plotly_chart(yoy_fig, use_container_width=True)
+            st.plotly_chart(yoy_fig, width='content')
             st.caption("Compare the same months across different years.")
 
     # ---- TAB 2: Vendors & Payments ----
@@ -439,7 +439,7 @@ def page_dashboard():
             if not vendor_df.empty:
                 st.plotly_chart(
                     dashboard_charts.vendor_bar_chart(vendor_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Top vendors by total spending.")
             else:
@@ -448,7 +448,7 @@ def page_dashboard():
             if not vendor_df.empty:
                 st.plotly_chart(
                     dashboard_charts.vendor_pie_chart(vendor_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Share of spending by vendor.")
 
@@ -457,7 +457,7 @@ def page_dashboard():
             if not payment_df.empty:
                 st.plotly_chart(
                     dashboard_charts.payment_method_bar(payment_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Total spending by payment method.")
             else:
@@ -466,7 +466,7 @@ def page_dashboard():
             if not payment_df.empty:
                 st.plotly_chart(
                     dashboard_charts.payment_method_pie(payment_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Payment method share of total spending.")
 
@@ -476,13 +476,13 @@ def page_dashboard():
         with chart_col5:
             st.plotly_chart(
                 dashboard_charts.transaction_histogram(filtered_df),
-                use_container_width=True,
+                width='content',
             )
             st.caption("Distribution of bill sizes. Most bills cluster near the center.")
         with chart_col6:
             st.plotly_chart(
                 dashboard_charts.day_of_week_bar(filtered_df),
-                use_container_width=True,
+                width='content',
             )
             st.caption("Total spending by day of the week.")
 
@@ -501,7 +501,7 @@ def page_dashboard():
             if not top_items_df.empty:
                 st.plotly_chart(
                     dashboard_charts.top_items_bar(top_items_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Items that cost the most overall.")
             else:
@@ -510,7 +510,7 @@ def page_dashboard():
             if not frequent_items_df.empty:
                 st.plotly_chart(
                     dashboard_charts.frequent_items_bar(frequent_items_df),
-                    use_container_width=True,
+                    width='content',
                 )
                 st.caption("Items you buy most often.")
             else:

@@ -7,6 +7,8 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 
+from .analytics import calculate_kpis, calculate_month_comparison
+
 from src.database import get_all_bills, get_bill_items
 
 
@@ -107,56 +109,57 @@ def page_dashboard():
         bills_df.get("purchase_date"), errors="coerce"
     )
 
-    # Aggregate headline metrics.
-    total_spent = bills_df["total_amount"].sum()
-    months_active = bills_df["purchase_date_dt"].dt.to_period("M").nunique() or 1
-    avg_per_month = total_spent / months_active
-    vendors_count = bills_df["vendor_name"].nunique()
-    transactions_count = len(bills_df)
-    avg_transaction = total_spent / transactions_count if transactions_count > 0 else 0
+ # Calculate KPIs and month-over-month comparison.
+    kpis = calculate_kpis(bills_df)
+    month_data = calculate_month_comparison(bills_df)
 
-    # Compute current and previous month windows.
-    current_month = datetime.now().replace(day=1)
-    prev_month = (current_month - timedelta(days=1)).replace(day=1)
+    total_spent = kpis["total_spent"]
+    avg_per_month = kpis["avg_per_month"]
+    vendors_count = kpis["vendors_count"]
+    transactions_count = kpis["transactions_count"]
+    avg_transaction = kpis["avg_transaction"]
 
-    current_month_data = bills_df[bills_df["purchase_date_dt"] >= current_month]
-    prev_month_data = bills_df[
-        (bills_df["purchase_date_dt"] >= prev_month)
-        & (bills_df["purchase_date_dt"] < current_month)
-    ]
-
-    current_month_spend = current_month_data["total_amount"].sum()
-    prev_month_spend = prev_month_data["total_amount"].sum()
-
-    spend_delta = current_month_spend - prev_month_spend
-    spend_delta_pct = (
-        (spend_delta / prev_month_spend * 100) if prev_month_spend > 0 else 0
-    )
+    spend_delta_pct = month_data["spend_delta_pct"]
+    prev_month_spend = month_data["prev_month_spend"]
 
     # KPI cards for quick insights.
     st.markdown("### 📈 Key Metrics")
     col1, col2, col3, col4, col5 = st.columns(5)
+
     with col1:
         st.metric(
             label="💰 Total Spend",
             value=f"${total_spent:,.2f}",
-            delta=f"{spend_delta_pct:+.1f}% vs last month" if prev_month_spend > 0 else None,
+            delta=f"{spend_delta_pct:+.1f}% vs last month"
+            if prev_month_spend > 0 else None,
         )
+
     with col2:
-        bill_delta = len(current_month_data) - len(prev_month_data)
         st.metric(
             label="🧾 Total Bills",
             value=str(transactions_count),
-            delta=f"{bill_delta:+d} this month" if len(prev_month_data) > 0 else None,
         )
+
     with col3:
-        st.metric(label="💵 Avg Bill Value", value=f"${avg_transaction:,.2f}")
+        st.metric(
+            label="💵 Avg Bill Value",
+            value=f"${avg_transaction:,.2f}"
+        )
+
     with col4:
-        st.metric(label="🏪 Unique Vendors", value=str(vendors_count))
+        st.metric(
+            label="🏪 Unique Vendors",
+            value=str(vendors_count)
+        )
+
     with col5:
-        st.metric(label="📊 Monthly Avg", value=f"${avg_per_month:,.2f}")
+        st.metric(
+            label="📊 Monthly Avg",
+            value=f"${avg_per_month:,.2f}"
+        )
 
     st.divider()
+
 
     # Filter controls for date, vendor, amount, and payment method.
     st.markdown("### 🔍 Smart Filters")

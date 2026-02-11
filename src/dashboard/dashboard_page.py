@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from src.database import get_all_bills, get_bill_items
 from src.dashboard import analytics as dashboard_analytics
 from src.dashboard import charts as dashboard_charts
+from src.dashboard import insights as dashboard_insights
 
 
 @st.cache_data(ttl=60, show_spinner=False)
@@ -398,6 +399,9 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Total spending by month. Look for peaks to spot high-cost periods.")
+                insight = dashboard_insights.monthly_spending_insight(monthly_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
             else:
                 st.info("No monthly spending data available for this range.")
         with chart_col2:
@@ -407,6 +411,9 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("How many bills you had each month.")
+                insight = dashboard_insights.monthly_transactions_insight(monthly_counts_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
             else:
                 st.info("No monthly bill count data available for this range.")
 
@@ -418,6 +425,9 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Breakdown of subtotal vs tax for each month.")
+                insight = dashboard_insights.tax_vs_subtotal_insight(monthly_tax_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
         with chart_col_b:
             if not monthly_df.empty:
                 st.plotly_chart(
@@ -425,12 +435,18 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Running total of spending over time.")
+                insight = dashboard_insights.cumulative_spending_insight(monthly_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
 
         # Year-over-year (only shows if data spans multiple years)
         yoy_fig = dashboard_charts.yoy_comparison(filtered_df)
         if yoy_fig.data:
             st.plotly_chart(yoy_fig, width='content')
             st.caption("Compare the same months across different years.")
+            insight = dashboard_insights.yoy_insight(filtered_df)
+            if insight:
+                st.markdown(f"**Insight:** {insight}")
 
     # ---- TAB 2: Vendors & Payments ----
     with tab_vendors:
@@ -442,6 +458,9 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Top vendors by total spending.")
+                insight = dashboard_insights.vendor_insight(vendor_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
             else:
                 st.info("No vendor data available for this range.")
         with chart_col4:
@@ -451,6 +470,9 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Share of spending by vendor.")
+                insight = dashboard_insights.vendor_insight(vendor_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
 
         chart_col_e, chart_col_f = st.columns(2)
         with chart_col_e:
@@ -460,6 +482,9 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Total spending by payment method.")
+                insight = dashboard_insights.payment_insight(payment_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
             else:
                 st.info("No payment method data available for this range.")
         with chart_col_f:
@@ -469,6 +494,9 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Payment method share of total spending.")
+                insight = dashboard_insights.payment_insight(payment_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
 
     # ---- TAB 3: Spending Patterns ----
     with tab_patterns:
@@ -479,12 +507,18 @@ def page_dashboard():
                 width='content',
             )
             st.caption("Distribution of bill sizes. Most bills cluster near the center.")
+            insight = dashboard_insights.transaction_histogram_insight(filtered_df)
+            if insight:
+                st.markdown(f"**Insight:** {insight}")
         with chart_col6:
             st.plotly_chart(
                 dashboard_charts.day_of_week_bar(filtered_df),
                 width='content',
             )
             st.caption("Total spending by day of the week.")
+            insight = dashboard_insights.day_of_week_insight(filtered_df)
+            if insight:
+                st.markdown(f"**Insight:** {insight}")
 
     # ---- TAB 4: Item Insights ----
     with tab_items:
@@ -504,6 +538,9 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Items that cost the most overall.")
+                insight = dashboard_insights.top_items_insight(top_items_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
             else:
                 st.info("No item spend data available for this range.")
         with item_col2:
@@ -513,5 +550,8 @@ def page_dashboard():
                     width='content',
                 )
                 st.caption("Items you buy most often.")
+                insight = dashboard_insights.frequent_items_insight(frequent_items_df)
+                if insight:
+                    st.markdown(f"**Insight:** {insight}")
             else:
                 st.info("No item frequency data available for this range.")

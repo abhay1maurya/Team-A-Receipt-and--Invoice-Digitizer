@@ -18,6 +18,7 @@ def export_csv(bills_df):
 		UTF-8 encoded CSV bytes for download.
 	"""
 	# CSV export is used by the summary download action.
+	# Encode as UTF-8 to keep downloads consistent across browsers.
 	return bills_df.to_csv(index=False).encode("utf-8")
 
 
@@ -33,6 +34,7 @@ def export_excel(bills_df):
 	output = BytesIO()
 	# Single-sheet export for the summary bills table.
 	with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+		# Keep the worksheet name stable for consumers.
 		bills_df.to_excel(writer, index=False, sheet_name="Bills")
 	return output.getvalue()
 
@@ -46,6 +48,7 @@ def export_pdf(bills_df):
 	Returns:
 		PDF bytes containing a landscape table of selected bill fields.
 	"""
+	# Use an in-memory buffer so Streamlit can serve the file directly.
 	pdf_buffer = BytesIO()
 
 	doc = SimpleDocTemplate(
@@ -70,10 +73,11 @@ def export_pdf(bills_df):
 		("payment_method", "Payment Method"),
 	]
 
-	# Build the table header and rows.
+	# Build the table header and rows in the same order as field_map.
 	headers = [label for _, label in field_map]
 	table_data = [headers]
 	for _, row in bills_df.iterrows():
+		# Convert all values to strings to satisfy ReportLab cell expectations.
 		table_data.append([str(row.get(key, "")) for key, _ in field_map])
 
 	# Minimal styling for readability in the PDF table.
@@ -90,6 +94,7 @@ def export_pdf(bills_df):
 		)
 	)
 
+	# Render the single table into the PDF buffer.
 	doc.build([table])
 	return pdf_buffer.getvalue()
 
@@ -108,6 +113,7 @@ def export_detailed_csv(bills_df, items_df):
 	detailed_data = []
 	for _, bill in bills_df.iterrows():
 		bill_id = bill.get("id")
+		# Match line items for the current bill; fall back to empty list if missing.
 		# Pull all line items that match the current bill.
 		bill_items = (
 			items_df[items_df["bill_id"] == bill_id]
@@ -118,6 +124,7 @@ def export_detailed_csv(bills_df, items_df):
 		# Add one row per line item, or a placeholder when none exist.
 		if len(bill_items) > 0:
 			for _, item in bill_items.iterrows():
+				# Duplicate bill metadata so each item row is self-contained.
 				detailed_data.append(
 					{
 						"Bill_ID": bill_id,
@@ -138,6 +145,7 @@ def export_detailed_csv(bills_df, items_df):
 					}
 				)
 		else:
+			# Include a placeholder row so every bill appears in the export.
 			detailed_data.append(
 				{
 					"Bill_ID": bill_id,
@@ -158,6 +166,7 @@ def export_detailed_csv(bills_df, items_df):
 				}
 			)
 
+	# Turn the flattened list into a DataFrame for CSV output.
 	detailed_df = pd.DataFrame(detailed_data)
 	return detailed_df.to_csv(index=False).encode("utf-8")
 
@@ -179,6 +188,7 @@ def export_detailed_excel(bills_df, items_df):
 		detailed_data = []
 		for _, bill in bills_df.iterrows():
 			bill_id = bill.get("id")
+			# Match line items for the current bill; fall back to empty list if missing.
 			# Match line items to the current bill for the detailed view.
 			bill_items = (
 				items_df[items_df["bill_id"] == bill_id]
@@ -189,6 +199,7 @@ def export_detailed_excel(bills_df, items_df):
 			# Add one row per line item, or a placeholder when none exist.
 			if len(bill_items) > 0:
 				for _, item in bill_items.iterrows():
+					# Duplicate bill metadata so each item row is self-contained.
 					detailed_data.append(
 						{
 							"Bill_ID": bill_id,
@@ -209,6 +220,7 @@ def export_detailed_excel(bills_df, items_df):
 						}
 					)
 			else:
+				# Include a placeholder row so every bill appears in the export.
 				detailed_data.append(
 					{
 						"Bill_ID": bill_id,
@@ -247,6 +259,7 @@ def export_detailed_pdf(bills_df, items_df):
 	Returns:
 		PDF bytes containing a landscape table of bill and item fields.
 	"""
+	# Use an in-memory buffer so Streamlit can serve the file directly.
 	pdf_buffer = BytesIO()
 
 	doc = SimpleDocTemplate(
@@ -297,6 +310,7 @@ def export_detailed_pdf(bills_df, items_df):
 				"unit_price": "",
 				"item_total": "",
 			}
+			# Convert all values to strings to satisfy ReportLab cell expectations.
 			table_data.append([str(row.get(key, "")) for key, _ in columns])
 			continue
 
@@ -312,6 +326,7 @@ def export_detailed_pdf(bills_df, items_df):
 				"unit_price": item.get("unit_price", ""),
 				"item_total": item.get("item_total", ""),
 			}
+			# Convert all values to strings to satisfy ReportLab cell expectations.
 			table_data.append([str(row.get(key, "")) for key, _ in columns])
 
 	# Minimal styling for readability in the PDF table.
@@ -328,5 +343,6 @@ def export_detailed_pdf(bills_df, items_df):
 		)
 	)
 
+	# Render the single table into the PDF buffer.
 	doc.build([table])
 	return pdf_buffer.getvalue()

@@ -216,11 +216,7 @@ pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 ```
 
-Create a `.env` file and set your key:
-
-```env
-GOOGLE_API_KEY="your_gemini_api_key_here"
-```
+Set your API key using the `GOOGLE_API_KEY` environment variable, or enter it in the app sidebar.
 
 Run the app:
 
@@ -298,13 +294,7 @@ python -m spacy download en_core_web_sm
 
 ### 6️⃣ Configure API Key
 
-Create a `.env` file in the root directory:
-
-```
-GOOGLE_API_KEY="your_gemini_api_key_here"
-```
-
-Alternatively, you can enter the API key inside the application sidebar.
+Set `GOOGLE_API_KEY` in your environment or enter the API key inside the application sidebar.
 
 ---
 

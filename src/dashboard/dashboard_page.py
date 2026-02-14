@@ -18,6 +18,12 @@ from src.dashboard import analytics as dashboard_analytics
 from src.dashboard import charts as dashboard_charts
 from src.dashboard import insights as dashboard_insights
 
+from src.database import get_monthly_spending
+from src.database import get_filtered_bills
+
+
+import time
+
 
 @st.cache_data(ttl=60, show_spinner=False)
 def _cached_bills():
@@ -70,6 +76,9 @@ def page_dashboard():
     This function is intentionally UI-focused and delegates data logic to
     src.dashboard.analytics and chart rendering to src.dashboard.charts.
     """
+    start = time.time()
+    monthly_data = get_monthly_spending()
+    print("Monthly query time:", time.time() - start)
 
     # Basic styling for KPI cards.
     st.markdown(
@@ -334,15 +343,28 @@ def page_dashboard():
         )
 
     # Apply the active filters to the bills data.
-    filtered_df = bills_df[
-        (bills_df["purchase_date_dt"] >= start_date)
-        & (bills_df["purchase_date_dt"] <= end_date)
-        & (bills_df["total_amount"] >= amount_range[0])
-        & (bills_df["total_amount"] <= amount_range[1])
-    ].copy()
 
-    if selected_vendor != "All Vendors":
-        filtered_df = filtered_df[filtered_df["vendor_name"] == selected_vendor]
+    # Filtering happens in SQL
+    filtered_data = get_filtered_bills(
+        start_date=start_date.strftime("%Y-%m-%d"),
+        end_date=end_date.strftime("%Y-%m-%d"),
+        min_amount=amount_range[0],
+        max_amount=amount_range[1],
+        vendor=selected_vendor,
+        payment_method=selected_payment,
+    )
+
+    filtered_df = pd.DataFrame(filtered_data)
+
+    if not filtered_df.empty:
+        filtered_df["purchase_date_dt"] = pd.to_datetime(
+            filtered_df["purchase_date"], errors="coerce"
+        )
+
+
+
+
+    
 
     if selected_payment != "All Methods":
         filtered_df = filtered_df[filtered_df["payment_method"] == selected_payment]
@@ -374,7 +396,11 @@ def page_dashboard():
     # Charts and Analytics
     st.markdown("### 📊 Insights & Trends")
 
-    monthly_df = dashboard_analytics.monthly_spending(filtered_df)
+    # monthly_df = dashboard_analytics.monthly_spending(filtered_df)
+    #  Now aggregation happens in SQL, not Pandas.
+    monthly_data = get_monthly_spending()
+    monthly_df = pd.DataFrame(monthly_data)
+
     monthly_tax_df = dashboard_analytics.monthly_tax_breakdown(filtered_df)
     monthly_counts_df = dashboard_analytics.monthly_transaction_counts(filtered_df)
     vendor_df = dashboard_analytics.top_vendors(filtered_df)

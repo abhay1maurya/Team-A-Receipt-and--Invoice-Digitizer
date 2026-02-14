@@ -80,10 +80,102 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_lineitems_bill_id 
             ON lineitems(bill_id)
         """)
+        
+        # Adding More Indexes (Small but Powerful)
+
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_bills_payment_method 
+            ON bills(payment_method)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_bills_total_amount 
+            ON bills(total_amount)
+        """)
+
+        
 
         conn.commit()
     finally:
         conn.close()
+
+# Filtered Query Function (Very Important Optimization)
+
+def get_filtered_bills(start_date=None, end_date=None,
+                       min_amount=None, max_amount=None,
+                       vendor=None, payment_method=None):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+
+        query = """
+            SELECT bill_id AS id,
+                   vendor_name,
+                   purchase_date,
+                   subtotal,
+                   tax_amount,
+                   total_amount,
+                   payment_method
+            FROM bills
+            WHERE 1=1
+        """
+
+        params = []
+
+        if start_date and end_date:
+            query += " AND purchase_date BETWEEN ? AND ?"
+            params.extend([start_date, end_date])
+
+        if min_amount is not None and max_amount is not None:
+            query += " AND total_amount BETWEEN ? AND ?"
+            params.extend([min_amount, max_amount])
+
+        if vendor and vendor != "All Vendors":
+            query += " AND vendor_name = ?"
+            params.append(vendor)
+
+        if payment_method and payment_method != "All Methods":
+            query += " AND payment_method = ?"
+            params.append(payment_method)
+
+        query += " ORDER BY bill_id DESC"
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+
+        return [dict(r) for r in rows]
+
+    finally:
+        conn.close()
+
+
+    # Optimize Reports Using SQL Aggregation
+
+def get_monthly_spending():
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT strftime('%Y-%m', purchase_date) AS month,
+                   SUM(total_amount) AS total_amount
+            FROM bills
+            GROUP BY month
+            ORDER BY month
+        """)
+        rows = cursor.fetchall()
+        return [
+            {
+                "month": r["month"],
+                "total_amount": float(r["total_amount"] or 0)
+            }
+            for r in rows
+        ]
+    finally:
+        conn.close()
+
+
+
 
 def insert_bill(bill_data: Dict, user_id: int = 1, currency: str = "USD", file_path: Optional[str] = None) -> int:
     """Insert a bill and its line items into the database.
@@ -219,6 +311,65 @@ def get_all_bills() -> List[Dict]:
         return bills
     finally:
         conn.close()
+
+def get_filtered_bills(start_date=None, end_date=None,
+                       min_amount=None, max_amount=None,
+                       vendor=None, payment_method=None):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+
+        query = """
+            SELECT bill_id AS id,
+                   vendor_name,
+                   purchase_date,
+                   subtotal,
+                   tax_amount,
+                   total_amount,
+                   payment_method
+            FROM bills
+            WHERE 1=1
+        """
+
+        params = []
+
+        if start_date and end_date:
+            query += " AND purchase_date BETWEEN ? AND ?"
+            params.extend([start_date, end_date])
+
+        if min_amount is not None and max_amount is not None:
+            query += " AND total_amount BETWEEN ? AND ?"
+            params.extend([min_amount, max_amount])
+
+        if vendor and vendor != "All Vendors":
+            query += " AND vendor_name = ?"
+            params.append(vendor)
+
+        if payment_method and payment_method != "All Methods":
+            query += " AND payment_method = ?"
+            params.append(payment_method)
+
+        query += " ORDER BY bill_id DESC"
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+
+        return [
+            {
+                "id": r["id"],
+                "vendor_name": r["vendor_name"],
+                "purchase_date": r["purchase_date"],
+                "subtotal": float(r["subtotal"] or 0),
+                "tax_amount": float(r["tax_amount"] or 0),
+                "total_amount": float(r["total_amount"] or 0),
+                "payment_method": r["payment_method"],
+            }
+            for r in rows
+        ]
+
+    finally:
+        conn.close()
+
 
 
 def get_bill_items(bill_id: int) -> List[Dict]:

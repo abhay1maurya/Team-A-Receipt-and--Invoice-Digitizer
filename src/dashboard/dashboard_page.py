@@ -12,11 +12,13 @@ Data flow overview:
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+import re
 
 from src.database import get_all_bills, get_bill_items
 from src.dashboard import analytics as dashboard_analytics
 from src.dashboard import charts as dashboard_charts
 from src.dashboard import insights as dashboard_insights
+from src.dashboard import ai_insights as dashboard_ai_insights
 
 from src.database import get_monthly_spending
 from src.database import get_filtered_bills
@@ -65,6 +67,101 @@ def _cached_items(bills):
                 }
             )
     return items
+
+
+def _render_ai_insights(markdown_text: str) -> None:
+    """Render AI insights with enhanced styling using simple markdown-to-HTML rules."""
+    if not markdown_text:
+        return
+
+    html_lines = []
+    in_list = False
+
+    def close_list():
+        nonlocal in_list
+        if in_list:
+            html_lines.append("</ul>")
+            in_list = False
+
+    def format_inline(text: str) -> str:
+        text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+        text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+        return text
+
+    for raw_line in markdown_text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            close_list()
+            html_lines.append("<div class='ai-gap'></div>")
+            continue
+
+        if line.startswith("## "):
+            close_list()
+            title = format_inline(line[3:])
+            html_lines.append(f"<h2 class='ai-section-title'>{title}</h2>")
+            continue
+
+        if line == "---":
+            close_list()
+            html_lines.append("<hr class='ai-divider' />")
+            continue
+
+        if line.startswith("-"):
+            if not in_list:
+                html_lines.append("<ul class='ai-list'>")
+                in_list = True
+            item = format_inline(line[1:].strip())
+            html_lines.append(f"<li>{item}</li>")
+            continue
+
+        close_list()
+        html_lines.append(f"<p class='ai-paragraph'>{format_inline(line)}</p>")
+
+    close_list()
+
+    html = "\n".join(html_lines)
+    st.markdown(
+        """
+        <style>
+        .ai-insights-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f6f8fb 100%);
+            border: 1px solid #e6eaf0;
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 10px 24px rgba(17, 24, 39, 0.08);
+        }
+        .ai-section-title {
+            margin: 0.9rem 0 0.25rem 0;
+            color: #1f2937;
+            font-size: 1.15rem;
+            letter-spacing: 0.2px;
+        }
+        .ai-paragraph {
+            margin: 0.35rem 0 0.75rem 0;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+        .ai-list {
+            margin: 0.2rem 0 0.9rem 1rem;
+            color: #374151;
+        }
+        .ai-list li {
+            margin: 0.35rem 0;
+            line-height: 1.45;
+        }
+        .ai-divider {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 0.85rem 0;
+        }
+        .ai-gap {
+            height: 0.5rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(f"<div class='ai-insights-card'>{html}</div>", unsafe_allow_html=True)
 
 
 def page_dashboard():
@@ -406,13 +503,19 @@ def page_dashboard():
     vendor_df = dashboard_analytics.top_vendors(filtered_df)
     payment_df = dashboard_analytics.payment_distribution(filtered_df)
 
+    all_items = _cached_items(bills)
+    items_df = dashboard_analytics.prepare_items_dataframe(all_items)
+    if not items_df.empty and "bill_id" in items_df.columns and "id" in filtered_df.columns:
+        items_df = items_df[items_df["bill_id"].isin(filtered_df["id"])].copy()
+
     # Tabbed chart sections for simpler navigation
     # Segment charts by theme to keep the page scannable.
-    tab_overview, tab_vendors, tab_patterns, tab_items = st.tabs([
+    tab_overview, tab_vendors, tab_patterns, tab_items, tab_ai = st.tabs([
         "📌 Overview",
         "🏪 Vendors & Payments",
         "📅 Spending Patterns",
         "🧾 Item Insights",
+        "🤖 AI Insights",
     ])
 
     # ---- TAB 1: Overview ----
@@ -548,11 +651,6 @@ def page_dashboard():
 
     # ---- TAB 4: Item Insights ----
     with tab_items:
-        all_items = _cached_items(bills)
-        items_df = dashboard_analytics.prepare_items_dataframe(all_items)
-        if not items_df.empty and "bill_id" in items_df.columns and "id" in filtered_df.columns:
-            items_df = items_df[items_df["bill_id"].isin(filtered_df["id"])].copy()
-
         top_items_df = dashboard_analytics.top_items_by_spend(items_df)
         frequent_items_df = dashboard_analytics.most_frequent_items(items_df)
 
@@ -581,3 +679,38 @@ def page_dashboard():
                     st.markdown(f"**Insight:** {insight}")
             else:
                 st.info("No item frequency data available for this range.")
+
+    # ---- TAB 5: AI Insights ----
+    with tab_ai:
+        st.markdown("Generate AI-powered insights from your filtered data in one click.")
+
+        if not st.session_state.get("api_key"):
+            st.warning("Please add your Gemini API key in the sidebar to use AI insights.")
+        else:
+            summary = dashboard_ai_insights.build_summary(
+                filtered_df,
+                vendor_df,
+                payment_df,
+                items_df,
+            )
+            summary_key = dashboard_ai_insights.summary_hash(summary)
+
+            if st.button("Generate AI Insights", key="ai_insights_generate"):
+                with st.spinner("Generating insights with Gemini..."):
+                    result = dashboard_ai_insights.generate_ai_insights(
+                        summary,
+                        st.session_state.get("api_key"),
+                    )
+                if result.get("error"):
+                    st.error(result["error"])
+                else:
+                    st.session_state["ai_insights_text"] = result.get("text", "")
+                    st.session_state["ai_insights_key"] = summary_key
+
+            cached_text = st.session_state.get("ai_insights_text")
+            cached_key = st.session_state.get("ai_insights_key")
+
+            if cached_text and cached_key == summary_key:
+                _render_ai_insights(cached_text)
+            elif cached_text and cached_key != summary_key:
+                st.info("Filters changed since the last run. Click Generate AI Insights to refresh.")

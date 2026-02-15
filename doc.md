@@ -530,3 +530,440 @@ def _cached_bills():
 ---
 
 This documentation provides a comprehensive technical overview of your application's structure, architecture, data flow, and design patterns. You can use these sections directly in your milestone documentation or adapt them as needed!
+
+
+
+# Application Structure & Architecture Documentation
+
+## 1. Application Overview
+
+**DigitizeBills** is an AI-powered receipt and invoice digitization platform designed to automate financial document processing, storage, analytics, and insight generation. The system converts unstructured receipt images and PDFs into structured, searchable, and analytics-ready financial records using AI, deterministic extraction, and structured database storage.
+
+The application uses a modular, layered architecture to ensure scalability, maintainability, and reliable processing.
+
+### Technology Stack
+
+**Frontend**
+
+* Streamlit – Interactive web application framework
+
+**Backend**
+
+* Python 3.12+ – Core application logic
+
+**AI & Extraction**
+
+* Google Gemini API – OCR and structured extraction
+* Template Parser – Vendor-specific deterministic parsing
+* spaCy – Vendor name extraction (NER)
+* Regex Engine – Deterministic fallback extraction
+
+**Data Processing**
+
+* Pandas – Analytics and aggregation
+* NumPy – Numerical operations
+
+**Image Processing**
+
+* OpenCV – Image preprocessing
+* Pillow – Image handling
+* pdf2image – PDF conversion
+
+**Database**
+
+* SQLite – Persistent relational storage
+
+**Visualization**
+
+* Plotly – Interactive analytics charts
+
+**Export**
+
+* ReportLab – PDF export
+* XlsxWriter – Excel export
+
+---
+
+## 2. System Architecture
+
+**Architecture Pattern:** Layered Modular Architecture (Presentation → Processing → Storage → Analytics)
+
+```
+Presentation Layer
+│
+├── app.py (Streamlit UI Controller)
+├── Dashboard UI
+├── Upload & Processing UI
+├── History UI
+└── Admin UI
+
+↓
+
+Processing Layer (Core Business Logic)
+│
+├── ingestion.py
+├── preprocessing.py
+├── ocr.py
+├── extraction/
+│   ├── template_parser.py
+│   ├── field_extractor.py
+│   ├── normalizer.py
+│   ├── currency_converter.py
+│   └── vendor_extractor_spacy.py
+│
+├── validation.py
+├── duplicate.py
+
+↓
+
+Persistence Layer
+│
+└── database.py
+    └── SQLite Database
+        ├── bills table
+        └── lineitems table
+
+↓
+
+Analytics Layer
+│
+├── analytics.py
+├── charts.py
+├── insights.py
+├── ai_insights.py
+└── exports.py
+```
+
+---
+
+## 3. Complete Processing Pipeline
+
+### Step 1: File Ingestion
+
+Module: `ingestion.py`
+
+Responsibilities:
+
+* Validate file type (JPG, PNG, PDF)
+* Validate file size
+* Generate SHA-256 hash
+* Convert PDF to images
+
+Output:
+
+* Structured image list
+* File metadata
+
+---
+
+### Step 2: Image Preprocessing
+
+Module: `preprocessing.py`
+
+Responsibilities:
+
+* Image orientation correction
+* Grayscale conversion
+* Noise removal
+* Contrast enhancement
+* OCR optimization
+
+Output:
+
+* Enhanced OCR-ready images
+
+---
+
+### Step 3: AI OCR and Structured Extraction
+
+Module: `ocr.py`
+
+Responsibilities:
+
+* Send image to Gemini Vision API
+* Extract structured financial fields
+* Extract raw OCR text
+
+Output:
+
+```
+{
+  invoice_number,
+  vendor_name,
+  purchase_date,
+  total_amount,
+  tax_amount,
+  items[]
+}
+```
+
+---
+
+### Step 4: Template-Based Parsing (Milestone 4)
+
+Module: `template_parser.py`
+
+Responsibilities:
+
+* Detect vendor templates
+* Apply vendor-specific extraction rules
+* Extract structured line items
+* Improve extraction accuracy
+
+Fallback order:
+
+```
+Gemini AI → Template Parser → Regex Extractor
+```
+
+---
+
+### Step 5: Regex and NLP Fallback Extraction
+
+Module: `field_extractor.py`
+
+Responsibilities:
+
+* Recover missing fields
+* Extract financial values
+* Extract invoice number
+* Extract date and totals
+
+Module: `vendor_extractor_spacy.py`
+
+Responsibilities:
+
+* Identify vendor name using NLP
+
+---
+
+### Step 6: Data Normalization
+
+Module: `normalizer.py`
+
+Responsibilities:
+
+* Date formatting
+* Currency normalization
+* Numeric conversion
+* Field standardization
+
+---
+
+### Step 7: Validation and Duplicate Detection
+
+Modules:
+
+* validation.py
+* duplicate.py
+
+Responsibilities:
+
+* Validate financial integrity
+* Detect duplicate invoices
+* Prevent invalid database entries
+
+---
+
+### Step 8: Database Storage
+
+Module: `database.py`
+
+Responsibilities:
+
+* Store bill records
+* Store line items
+* Provide search and filter queries
+* Provide analytics queries
+
+Database tables:
+
+```
+bills
+lineitems
+```
+
+Indexes improve query performance.
+
+---
+
+### Step 9: Search, Filtering, and Query Optimization (Milestone 4)
+
+Responsibilities:
+
+* SQL-level filtering
+* Vendor filtering
+* Date filtering
+* Amount filtering
+* Payment method filtering
+
+Functions:
+
+```
+get_filtered_bills()
+get_monthly_spending()
+get_all_bills()
+```
+
+---
+
+### Step 10: Analytics and Visualization
+
+Modules:
+
+```
+analytics.py
+charts.py
+insights.py
+ai_insights.py
+```
+
+Responsibilities:
+
+* KPI computation
+* Vendor analytics
+* Monthly spending analysis
+* Trend detection
+* AI-generated insights
+
+Visualization:
+
+* Line charts
+* Bar charts
+* Pie charts
+* Histograms
+
+---
+
+### Step 11: Export and Reporting
+
+Module: `exports.py`
+
+Supports:
+
+* CSV export
+* Excel export
+* PDF export
+* Detailed line-item reports
+
+---
+
+## 4. Directory Structure
+
+```
+project/
+│
+├── app.py
+├── requirements.txt
+│
+├── src/
+│   ├── ingestion.py
+│   ├── preprocessing.py
+│   ├── ocr.py
+│   ├── validation.py
+│   ├── duplicate.py
+│   ├── database.py
+│   │
+│   ├── extraction/
+│   │   ├── template_parser.py
+│   │   ├── field_extractor.py
+│   │   ├── normalizer.py
+│   │   ├── currency_converter.py
+│   │   ├── vendor_extractor_spacy.py
+│   │   └── templates/
+│   │
+│   └── dashboard/
+│       ├── dashboard_page.py
+│       ├── analytics.py
+│       ├── charts.py
+│       ├── insights.py
+│       ├── ai_insights.py
+│       └── exports.py
+│
+└── receipt_invoice.db
+```
+
+---
+
+## 5. Key Architectural Features
+
+### Multi-Layer Extraction Strategy
+
+```
+Layer 1: Gemini AI Extraction
+Layer 2: Template Parser
+Layer 3: Regex Extraction
+```
+
+Ensures high extraction accuracy and reliability.
+
+---
+
+### Modular Architecture
+
+Each module performs a single responsibility:
+
+* ingestion → file handling
+* preprocessing → image enhancement
+* extraction → field extraction
+* validation → integrity checking
+* database → storage
+* dashboard → analytics
+
+---
+
+### Database Optimization
+
+Uses:
+
+* Indexed queries
+* Aggregated queries
+* SQL filtering
+* Cached retrieval
+
+Ensures fast dashboard performance.
+
+---
+
+### Error Handling and Stability
+
+Includes:
+
+* Safe template parsing
+* Regex fallback extraction
+* Transaction-based database operations
+* Validation before persistence
+
+---
+
+## 6. System Capabilities
+
+The system now supports:
+
+* Automated receipt OCR extraction
+* Template-based vendor extraction
+* Structured financial data storage
+* Advanced search and filtering
+* Interactive analytics dashboard
+* AI-generated financial insights
+* CSV, Excel, and PDF export
+* Duplicate detection
+* Multi-currency handling
+
+---
+
+## 7. Architecture Summary
+
+The DigitizeBills system provides a complete financial document intelligence pipeline with:
+
+* AI extraction
+* Deterministic parsing
+* Structured storage
+* Optimized search and analytics
+* AI-powered insights
+
+The modular design ensures scalability, maintainability, and production readiness.
+
+---
+
+

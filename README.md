@@ -36,6 +36,7 @@ Receipt and Invoice Digitizer automates the full lifecycle of document processin
 * Google Gemini structured JSON extraction
 * Regex-based deterministic fallback
 * spaCy NER vendor extraction
+* Template-based parsing for known vendor layouts
 * Multi-tier recovery strategy
 
 ### 💱 Currency and Financial Integrity
@@ -138,6 +139,8 @@ Receipt-and-Invoice-Digitizer/
     │   ├── field_extractor.py     # Regex-based extraction
     │   ├── regex_patterns.py      # Regex patterns library
     │   ├── vendor_extractor_spacy.py  # spaCy NER vendor extraction
+    │   ├── template_parser.py     # Vendor template parsing
+    │   ├── templates/             # Vendor templates (JSON)
     │   ├── normalizer.py          # Data normalization
     │   └── currency_converter.py  # Currency conversion to USD
     │
@@ -170,6 +173,47 @@ OCR is probabilistic. This system reduces failure risk using layered extraction.
 * Tier 1: Gemini AI structured JSON extraction
 * Tier 2: Regex fallback for missing fields
 * Tier 3: spaCy NER vendor detection (ORG entities)
+* Tier 4: Vendor template parsing (when a template exists)
+
+---
+
+## 🧩 Template-Based Parsing
+
+Vendor templates live under [src/extraction/templates/](src/extraction/templates/) and are applied when
+fallback is triggered and a vendor match exists.
+
+Template schema:
+
+```json
+{
+      "vendor_key": "VENDORKEY",
+      "aliases": ["VENDOR NAME", "VENDOR-ALIAS"],
+      "static_fields": {
+            "vendor_name": "VENDOR NAME"
+      },
+      "fields": {
+            "invoice_number": { "patterns": ["regex", "regex"] },
+            "purchase_date": { "patterns": ["regex", "regex"] },
+            "purchase_time": { "patterns": ["regex"] },
+            "subtotal": { "label_patterns": ["regex_label"] },
+            "tax_amount": { "label_patterns": ["regex_label"] },
+            "total_amount": { "label_patterns": ["regex_label"] }
+      },
+      "line_items": {
+            "start_markers": ["regex_label"],
+            "end_markers": ["regex_label"],
+            "line_pattern": "regex_with_named_groups"
+      }
+}
+```
+
+Notes:
+
+- `vendor_key` is the canonical key for a template.
+- `aliases` are matched after normalization (uppercased, non-alphanumerics removed).
+- `patterns` extract the first capture group match from OCR text.
+- `label_patterns` extract a numeric amount that follows a label.
+- `line_pattern` should include named groups like `item_name`, `quantity`, `unit_price`, `item_total`.
 
 ---
 

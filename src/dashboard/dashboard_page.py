@@ -295,8 +295,9 @@ def page_dashboard():
         (avg_bill_delta / prev_avg_bill * 100) if prev_avg_bill > 0 else None
     )
     st.markdown("### 📈 Key Metrics")
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
+    template_parsing_count = 0
+    row1_col1, row1_col2, row1_col3 = st.columns(3)
+    with row1_col1:
         st.metric(
             label="💰 Total Spend",
             value=f"${total_spent:,.2f}",
@@ -307,13 +308,13 @@ def page_dashboard():
             ),
             delta_color="inverse",
         )
-    with col2:
+    with row1_col2:
         st.metric(
             label="🧾 Total Bills",
             value=str(transactions_count),
             delta=f"{bill_delta:+d} vs last month",
         )
-    with col3:
+    with row1_col3:
         st.metric(
             label="💵 Avg Bill Value",
             value=f"${avg_transaction:,.2f}",
@@ -324,14 +325,17 @@ def page_dashboard():
             ),
             delta_color="inverse",
         )
-    with col4:
+    row2_col1, row2_col2, row2_col3 = st.columns(3)
+    with row2_col1:
         st.metric(
             label="🏪 Unique Vendors",
             value=str(vendors_count),
             delta=f"{vendor_delta:+d} vs last month",
         )
-    with col5:
+    with row2_col2:
         st.metric(label="📊 Monthly Avg", value=f"${avg_per_month:,.2f}")
+    with row2_col3:
+        st.metric(label="🧩 Template Parsed", value=str(template_parsing_count))
 
     # Quick insights summary for non-technical users.
     insights = []

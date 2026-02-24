@@ -176,6 +176,7 @@ def run_ocr_and_extract_bill(image: Image.Image, api_key: str) -> Dict:
 
         template = find_template_for_vendor(bill_data.get("vendor_name"))
         if template:
+            bill_data["parsed_with_template"] = True
             template_extracted = parse_with_template(ocr_text, template)
 
             # Merge template results only for weak or missing fields

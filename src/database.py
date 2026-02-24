@@ -48,9 +48,18 @@ def init_db():
                 original_total_amount DECIMAL(10, 2),
                 exchange_rate DECIMAL(10, 6),
                 payment_method VARCHAR(50),
+                parsed_with_template INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Backward-compatible schema evolution for existing databases.
+        cursor.execute("PRAGMA table_info(bills)")
+        existing_columns = {row[1] for row in cursor.fetchall()}
+        if "parsed_with_template" not in existing_columns:
+            cursor.execute(
+                "ALTER TABLE bills ADD COLUMN parsed_with_template INTEGER DEFAULT 0"
+            )
         
         # Line items table: stores individual items from each bill
         cursor.execute("""
@@ -205,6 +214,7 @@ def insert_bill(bill_data: Dict, user_id: int = 1, currency: str = "USD", file_p
         tax_amount = bill_data.get("tax_amount", 0) or 0
         total_amount = bill_data.get("total_amount", 0) or 0
         payment_method = bill_data.get("payment_method") or None
+        parsed_with_template = 1 if bill_data.get("parsed_with_template") else 0
         
         # Currency conversion fields (preserved from original bill)
         currency_value = bill_data.get("currency", currency)
@@ -218,13 +228,15 @@ def insert_bill(bill_data: Dict, user_id: int = 1, currency: str = "USD", file_p
             INSERT INTO bills (
                 user_id, invoice_number, vendor_name, purchase_date, purchase_time,
                 subtotal, tax_amount, total_amount, currency,
-                original_currency, original_total_amount, exchange_rate, payment_method
+                original_currency, original_total_amount, exchange_rate, payment_method,
+                parsed_with_template
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (user_id, invoice_number, vendor, purchase_date, purchase_time,
              subtotal, tax_amount, total_amount, currency_value,
-             original_currency, original_total_amount, exchange_rate, payment_method),
+             original_currency, original_total_amount, exchange_rate, payment_method,
+             parsed_with_template),
         )
         bill_id = cursor.lastrowid
 
@@ -283,7 +295,8 @@ def get_all_bills() -> List[Dict]:
                    original_currency,
                    original_total_amount,
                    exchange_rate,
-                   payment_method
+                     payment_method,
+                     parsed_with_template
             FROM bills
             ORDER BY bill_id DESC
             """
@@ -306,6 +319,7 @@ def get_all_bills() -> List[Dict]:
                     "original_total_amount": float(r["original_total_amount"]) if r["original_total_amount"] else None,
                     "exchange_rate": float(r["exchange_rate"]) if r["exchange_rate"] else None,
                     "payment_method": r["payment_method"],
+                    "parsed_with_template": bool(r["parsed_with_template"]),
                 }
             )
         return bills

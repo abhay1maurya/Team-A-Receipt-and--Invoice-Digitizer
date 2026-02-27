@@ -145,7 +145,8 @@ def run_ocr_and_extract_bill(image: Image.Image, api_key: str) -> Dict:
         weak_fields.append("total_amount")
     
     # Always trigger regex fallback if JSON parse failed (best-effort recovery)
-    if json_parse_failed or (weak_fields and ocr_text):
+    fallback_triggered = json_parse_failed or (weak_fields and ocr_text)
+    if fallback_triggered:
         try:
             regex_extracted = extract_fields_from_ocr(ocr_text)
             
@@ -167,6 +168,26 @@ def run_ocr_and_extract_bill(image: Image.Image, api_key: str) -> Dict:
         vendor_spacy = extract_vendor_spacy(ocr_text)
         if vendor_spacy:
             bill_data["vendor_name"] = vendor_spacy
+
+    # STEP 3C: Template-based parsing (vendor-specific)
+    # If fallback was triggered and a vendor template exists, try structured parsing
+    if fallback_triggered and ocr_text:
+        from .extraction.template_parser import find_template_for_vendor, parse_with_template
+
+        template = find_template_for_vendor(bill_data.get("vendor_name"))
+        if template:
+            bill_data["parsed_with_template"] = True
+            template_extracted = parse_with_template(ocr_text, template)
+
+            # Merge template results only for weak or missing fields
+            for field, value in template_extracted.items():
+                if field == "items":
+                    if is_field_weak(bill_data.get("items")) and value:
+                        bill_data["items"] = value
+                    continue
+
+                if is_field_weak(bill_data.get(field)) and value not in (None, ""):
+                    bill_data[field] = value
 
     # STEP 4: NOW NORMALIZE (SAFE) - After regex fallback
     # Use normalizer module to standardize all fields

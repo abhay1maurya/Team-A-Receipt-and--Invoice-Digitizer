@@ -1,0 +1,61 @@
+{
+  "vendor_key": "WALMART",
+  "aliases": [
+    "WALMART",
+    "WAL-MART",
+    "WAL*MART",
+    "WALMART SUPERCENTER"
+  ],
+  "static_fields": {
+    "vendor_name": "WALMART"
+  },
+  "fields": {
+    "invoice_number": {
+      "patterns": [
+        "(?:TRN|TC#|TRANSACTION|RECEIPT)\\s*[:\\-]?\\s*([A-Z0-9\\-]+)"
+      ]
+    },
+    "purchase_date": {
+      "patterns": [
+        "\\b(\\d{2}/\\d{2}/\\d{4})\\b",
+        "\\b(\\d{4}-\\d{2}-\\d{2})\\b"
+      ]
+    },
+    "purchase_time": {
+      "patterns": [
+        "\\b(\\d{2}:\\d{2})\\b"
+      ]
+    },
+    "subtotal": {
+      "label_patterns": [
+        "\\bSUBTOTAL\\b",
+        "\\bSUB TOTAL\\b"
+      ]
+    },
+    "tax_amount": {
+      "label_patterns": [
+        "\\bTAX\\b",
+        "\\bSALES TAX\\b"
+      ]
+    },
+    "total_amount": {
+      "label_patterns": [
+        "\\bTOTAL\\b",
+        "\\bAMOUNT DUE\\b"
+      ]
+    }
+  },
+  "line_items": {
+    "start_markers": [
+      "\\bITEM\\b",
+      "\\bDESCRIPTION\\b",
+      "\\bQTY\\b"
+    ],
+    "end_markers": [
+      "\\bSUBTOTAL\\b",
+      "\\bTOTAL\\b",
+      "\\bTAX\\b"
+    ],
+    "line_pattern": "(?P<item_name>[A-Z0-9][A-Z0-9 \\-\\.]{2,})\\s+(?P<quantity>\\d+(?:\\.\\d+)?)\\s+(?P<unit_price>\\d+(?:\\.\\d+)?)"
+  }
+}

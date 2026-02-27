@@ -48,9 +48,18 @@ def init_db():
                 original_total_amount DECIMAL(10, 2),
                 exchange_rate DECIMAL(10, 6),
                 payment_method VARCHAR(50),
+                parsed_with_template INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Backward-compatible schema evolution for existing databases.
+        cursor.execute("PRAGMA table_info(bills)")
+        existing_columns = {row[1] for row in cursor.fetchall()}
+        if "parsed_with_template" not in existing_columns:
+            cursor.execute(
+                "ALTER TABLE bills ADD COLUMN parsed_with_template INTEGER DEFAULT 0"
+            )
         
         # Line items table: stores individual items from each bill
         cursor.execute("""
@@ -80,10 +89,102 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_lineitems_bill_id 
             ON lineitems(bill_id)
         """)
+        
+        # Adding More Indexes (Small but Powerful)
+
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_bills_payment_method 
+            ON bills(payment_method)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_bills_total_amount 
+            ON bills(total_amount)
+        """)
+
+        
 
         conn.commit()
     finally:
         conn.close()
+
+# Filtered Query Function (Very Important Optimization)
+
+def get_filtered_bills(start_date=None, end_date=None,
+                       min_amount=None, max_amount=None,
+                       vendor=None, payment_method=None):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+
+        query = """
+            SELECT bill_id AS id,
+                   vendor_name,
+                   purchase_date,
+                   subtotal,
+                   tax_amount,
+                   total_amount,
+                   payment_method
+            FROM bills
+            WHERE 1=1
+        """
+
+        params = []
+
+        if start_date and end_date:
+            query += " AND purchase_date BETWEEN ? AND ?"
+            params.extend([start_date, end_date])
+
+        if min_amount is not None and max_amount is not None:
+            query += " AND total_amount BETWEEN ? AND ?"
+            params.extend([min_amount, max_amount])
+
+        if vendor and vendor != "All Vendors":
+            query += " AND vendor_name = ?"
+            params.append(vendor)
+
+        if payment_method and payment_method != "All Methods":
+            query += " AND payment_method = ?"
+            params.append(payment_method)
+
+        query += " ORDER BY bill_id DESC"
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+
+        return [dict(r) for r in rows]
+
+    finally:
+        conn.close()
+
+
+    # Optimize Reports Using SQL Aggregation
+
+def get_monthly_spending():
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT strftime('%Y-%m', purchase_date) AS month,
+                   SUM(total_amount) AS total_amount
+            FROM bills
+            GROUP BY month
+            ORDER BY month
+        """)
+        rows = cursor.fetchall()
+        return [
+            {
+                "month": r["month"],
+                "total_amount": float(r["total_amount"] or 0)
+            }
+            for r in rows
+        ]
+    finally:
+        conn.close()
+
+
+
 
 def insert_bill(bill_data: Dict, user_id: int = 1, currency: str = "USD", file_path: Optional[str] = None) -> int:
     """Insert a bill and its line items into the database.
@@ -113,6 +214,7 @@ def insert_bill(bill_data: Dict, user_id: int = 1, currency: str = "USD", file_p
         tax_amount = bill_data.get("tax_amount", 0) or 0
         total_amount = bill_data.get("total_amount", 0) or 0
         payment_method = bill_data.get("payment_method") or None
+        parsed_with_template = 1 if bill_data.get("parsed_with_template") else 0
         
         # Currency conversion fields (preserved from original bill)
         currency_value = bill_data.get("currency", currency)
@@ -126,13 +228,15 @@ def insert_bill(bill_data: Dict, user_id: int = 1, currency: str = "USD", file_p
             INSERT INTO bills (
                 user_id, invoice_number, vendor_name, purchase_date, purchase_time,
                 subtotal, tax_amount, total_amount, currency,
-                original_currency, original_total_amount, exchange_rate, payment_method
+                original_currency, original_total_amount, exchange_rate, payment_method,
+                parsed_with_template
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (user_id, invoice_number, vendor, purchase_date, purchase_time,
              subtotal, tax_amount, total_amount, currency_value,
-             original_currency, original_total_amount, exchange_rate, payment_method),
+             original_currency, original_total_amount, exchange_rate, payment_method,
+             parsed_with_template),
         )
         bill_id = cursor.lastrowid
 
@@ -191,7 +295,8 @@ def get_all_bills() -> List[Dict]:
                    original_currency,
                    original_total_amount,
                    exchange_rate,
-                   payment_method
+                     payment_method,
+                     parsed_with_template
             FROM bills
             ORDER BY bill_id DESC
             """
@@ -214,11 +319,71 @@ def get_all_bills() -> List[Dict]:
                     "original_total_amount": float(r["original_total_amount"]) if r["original_total_amount"] else None,
                     "exchange_rate": float(r["exchange_rate"]) if r["exchange_rate"] else None,
                     "payment_method": r["payment_method"],
+                    "parsed_with_template": bool(r["parsed_with_template"]),
                 }
             )
         return bills
     finally:
         conn.close()
+
+def get_filtered_bills(start_date=None, end_date=None,
+                       min_amount=None, max_amount=None,
+                       vendor=None, payment_method=None):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+
+        query = """
+            SELECT bill_id AS id,
+                   vendor_name,
+                   purchase_date,
+                   subtotal,
+                   tax_amount,
+                   total_amount,
+                   payment_method
+            FROM bills
+            WHERE 1=1
+        """
+
+        params = []
+
+        if start_date and end_date:
+            query += " AND purchase_date BETWEEN ? AND ?"
+            params.extend([start_date, end_date])
+
+        if min_amount is not None and max_amount is not None:
+            query += " AND total_amount BETWEEN ? AND ?"
+            params.extend([min_amount, max_amount])
+
+        if vendor and vendor != "All Vendors":
+            query += " AND vendor_name = ?"
+            params.append(vendor)
+
+        if payment_method and payment_method != "All Methods":
+            query += " AND payment_method = ?"
+            params.append(payment_method)
+
+        query += " ORDER BY bill_id DESC"
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+
+        return [
+            {
+                "id": r["id"],
+                "vendor_name": r["vendor_name"],
+                "purchase_date": r["purchase_date"],
+                "subtotal": float(r["subtotal"] or 0),
+                "tax_amount": float(r["tax_amount"] or 0),
+                "total_amount": float(r["total_amount"] or 0),
+                "payment_method": r["payment_method"],
+            }
+            for r in rows
+        ]
+
+    finally:
+        conn.close()
+
 
 
 def get_bill_items(bill_id: int) -> List[Dict]:

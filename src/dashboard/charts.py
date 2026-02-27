@@ -12,24 +12,29 @@ import plotly.graph_objects as go
 # THEME & COLOR PALETTE
 
 COLORS = {
-    "primary": "#4361ee",
-    "secondary": "#f72585",
-    "success": "#06d6a0",
-    "danger": "#ef476f",
-    "warning": "#ffd166",
-    "info": "#118ab2",
-    "purple": "#7209b7",
-    "teal": "#0cb0a9",
-    "orange": "#fb8500",
-    "slate": "#457b9d",
-    "dark": "#2b2d42",
+    "primary": "#2563eb",
+    "secondary": "#7c3aed",
+    "success": "#059669",
+    "danger": "#e11d48",
+    "warning": "#d97706",
+    "info": "#0891b2",
+    "purple": "#6d28d9",
+    "teal": "#0f766e",
+    "orange": "#ea580c",
+    "slate": "#475569",
+    "dark": "#0f172a",
     "light_bg": "rgba(0,0,0,0)",
 }
 
 PALETTE_SEQUENCE = [
-    "#4361ee", "#f72585", "#06d6a0", "#ffd166", "#118ab2",
-    "#7209b7", "#fb8500", "#0cb0a9", "#457b9d", "#ef476f",
+    "#2563eb", "#7c3aed", "#0891b2", "#059669", "#d97706",
+    "#e11d48", "#0f766e", "#475569", "#6d28d9", "#ea580c",
 ]
+
+FONT_FAMILY = "Inter, Segoe UI, Roboto, sans-serif"
+TITLE_FONT = dict(family=FONT_FAMILY, size=17, color="#0f172a")
+AXIS_TITLE_FONT = dict(family=FONT_FAMILY, size=12, color="#334155")
+TICK_FONT = dict(family=FONT_FAMILY, size=11, color="#475569")
 
 # Default qualitative palette for categorical charts.
 
@@ -38,13 +43,14 @@ _COMMON_LAYOUT = dict(
     autosize=True,
     plot_bgcolor="rgba(0,0,0,0)",
     paper_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="Segoe UI, Roboto, sans-serif", size=13, color="#2b2d42"),
+    font=dict(family=FONT_FAMILY, size=12, color="#0f172a"),
     margin=dict(l=60, r=40, t=70, b=60),
+    title=dict(x=0.01, xanchor="left", y=0.97, yanchor="top", font=TITLE_FONT),
     hoverlabel=dict(
         bgcolor="white",
-        font_size=13,
-        font_family="Segoe UI, Roboto, sans-serif",
-        bordercolor="#dee2e6",
+        font_size=12,
+        font_family=FONT_FAMILY,
+        bordercolor="#dbe4f0",
     ),
     legend=dict(
         orientation="h",
@@ -52,7 +58,7 @@ _COMMON_LAYOUT = dict(
         y=-0.25,
         xanchor="center",
         x=0.5,
-        font=dict(size=11),
+        font=dict(family=FONT_FAMILY, size=11, color="#475569"),
     ),
 )
 
@@ -61,9 +67,25 @@ def _apply_theme(fig, **overrides):
     """Apply the common theme to any figure."""
     # Allow per-chart overrides while keeping the global theme consistent.
     layout = {**_COMMON_LAYOUT, **overrides}
+    layout["colorway"] = PALETTE_SEQUENCE
     fig.update_layout(**layout)
-    fig.update_xaxes(showgrid=False, zeroline=False, automargin=True)
-    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.06)", zeroline=False, automargin=True)
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False,
+        automargin=True,
+        tickfont=TICK_FONT,
+        title_font=AXIS_TITLE_FONT,
+        linecolor="#cbd5e1",
+    )
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor="rgba(148,163,184,0.22)",
+        zeroline=False,
+        automargin=True,
+        tickfont=TICK_FONT,
+        title_font=AXIS_TITLE_FONT,
+        linecolor="#cbd5e1",
+    )
     return fig
 
 
@@ -93,7 +115,7 @@ def monthly_spending_line(monthly_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Monthly Spending Trend", font=dict(size=16)),
+        title=dict(text="Monthly Spending Trend"),
         height=340,
         hovermode="x unified",
         yaxis_title="Amount ($)",
@@ -128,7 +150,7 @@ def cumulative_spending_line(monthly_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Cumulative Spending Over Time", font=dict(size=16)),
+        title=dict(text="Cumulative Spending Over Time"),
         height=340,
         hovermode="x unified",
         yaxis_title="Cumulative ($)",
@@ -158,7 +180,7 @@ def monthly_transactions_bar(monthly_counts_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Number of Bills per Month", font=dict(size=16)),
+        title=dict(text="Number of Bills per Month"),
         height=320,
         yaxis_title="Bills",
         showlegend=False,
@@ -196,7 +218,7 @@ def tax_vs_subtotal_bar(monthly_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Tax vs Subtotal Breakdown", font=dict(size=16)),
+        title=dict(text="Tax vs Subtotal Breakdown"),
         barmode="stack",
         height=340,
         yaxis_title="Amount ($)",
@@ -243,7 +265,7 @@ def vendor_pie_chart(vendor_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Top Vendors by Spend", font=dict(size=16)),
+        title=dict(text="Top Vendors by Spend"),
         height=380,
         showlegend=False,
     )
@@ -275,7 +297,7 @@ def vendor_bar_chart(vendor_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Vendor Spend Ranking", font=dict(size=16)),
+        title=dict(text="Vendor Spend Ranking"),
         height=380,
         xaxis_title="Total Spend ($)",
         showlegend=False,
@@ -320,7 +342,7 @@ def payment_method_pie(payment_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Payment Method Distribution", font=dict(size=16)),
+        title=dict(text="Payment Method Distribution"),
         height=380,
         showlegend=False,
     )
@@ -352,7 +374,7 @@ def payment_method_bar(payment_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Spending by Payment Method", font=dict(size=16)),
+        title=dict(text="Spending by Payment Method"),
         height=320,
         xaxis_title="Amount ($)",
         showlegend=False,
@@ -397,7 +419,7 @@ def transaction_histogram(df):
 
     _apply_theme(
         fig,
-        title=dict(text="Transaction Size Distribution", font=dict(size=16)),
+        title=dict(text="Transaction Size Distribution"),
         height=340,
         xaxis_title="Bill Amount ($)",
         yaxis_title="Frequency",
@@ -450,7 +472,7 @@ def day_of_week_bar(df):
 
     _apply_theme(
         fig,
-        title=dict(text="Spending by Day of Week", font=dict(size=16)),
+        title=dict(text="Spending by Day of Week"),
         height=340,
         yaxis_title="Total Spend ($)",
         showlegend=False,
@@ -485,7 +507,7 @@ def top_items_bar(items_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Top Items by Spend", font=dict(size=16)),
+        title=dict(text="Top Items by Spend"),
         height=max(280, len(df) * 32 + 80),
         xaxis_title="Total Spend ($)",
         showlegend=False,
@@ -518,7 +540,7 @@ def frequent_items_bar(freq_df):
 
     _apply_theme(
         fig,
-        title=dict(text="Most Frequently Purchased Items", font=dict(size=16)),
+        title=dict(text="Most Frequently Purchased Items"),
         height=max(280, len(df) * 32 + 80),
         xaxis_title="Purchase Count",
         showlegend=False,
@@ -566,7 +588,7 @@ def yoy_comparison(df):
 
     _apply_theme(
         fig,
-        title=dict(text="Year-over-Year Monthly Comparison", font=dict(size=16)),
+        title=dict(text="Year-over-Year Monthly Comparison"),
         barmode="group",
         height=360,
         yaxis_title="Amount ($)",

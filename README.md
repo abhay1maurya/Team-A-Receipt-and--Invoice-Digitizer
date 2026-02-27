@@ -1,89 +1,110 @@
 
 # 📄 Receipt and Invoice Digitizer
 
-A robust, multi-stage document digitization system that converts physical receipts and invoices into validated, normalized, and analytics-ready structured data using **Google Gemini AI**, **spaCy NLP**, and **SQLite**.
+An end-to-end AI-powered document digitization system that converts receipts and invoices into validated, normalized, and analytics-ready structured data.
+
+Built with **Streamlit, Google Gemini AI, spaCy, and SQLite**, this project focuses on accuracy, fault tolerance, and a modular architecture.
 
 ---
 
-## 🚀 Project Overview
+## 🚀 Overview
 
-**Receipt and Invoice Digitizer** is a Streamlit-based web application designed to automate the end-to-end processing of receipts and invoices.
-It handles document ingestion, OCR, structured data extraction, validation, duplicate detection, currency normalization, and persistent storage — all with a focus on **correctness, reliability, and extensibility**.
+Receipt and Invoice Digitizer automates the full lifecycle of document processing:
 
-This project is intentionally engineered as a **foundation system**, not a quick OCR demo. Every layer is modular, deterministic, and designed to scale to future analytics and enterprise use cases.
+* Secure document ingestion
+* AI-based OCR extraction
+* Multi-tier fallback recovery
+* Data normalization and validation
+* Currency conversion
+* Duplicate detection
+* Persistent storage
+* Interactive analytics dashboard
 
 ---
 
-## ✨ Key Features
+## ✨ Core Features
 
-* 📸 **Image & PDF Upload Support** (JPG, PNG, PDF)
-* 🤖 **AI-Powered OCR** using Google Gemini 2.5 Flash
-* 🧠 **Multi-Tier Field Extraction Pipeline**
+### 📥 Document Processing
 
-  * Gemini Structured JSON
-  * Regex-based fallback
-  * spaCy Named Entity Recognition (Vendor extraction)
-* 💱 **Multi-Currency Support** with automatic conversion to USD
-* ✅ **Safe Amount Validation**
+* Image and PDF support (JPG, PNG, PDF)
+* Hash-based change detection
+* PDF-to-image conversion
+* Image preprocessing for OCR optimization
 
-  * Supports tax-inclusive and tax-exclusive pricing models
-* 🔁 **Duplicate Detection**
+### 🤖 AI-Powered Extraction
 
-  * Hard duplicate (invoice-level)
-  * Soft duplicate (logical similarity)
-* 🗃️ **SQLite Persistent Storage**
-* 📊 **Dashboard Analytics** with visual charts and spending insights
-* 🕒 **History & Audit View** with bill detail inspection
-* 🗑️ **Bill Deletion** with cascade deletion of line items
-* 🔐 **Security-Conscious Design**
-* 🧱 **Extensible Modular Architecture**
+* Google Gemini structured JSON extraction
+* Regex-based deterministic fallback
+* spaCy NER vendor extraction
+* Template-based parsing for known vendor layouts
+* Multi-tier recovery strategy
+
+### 💱 Currency and Financial Integrity
+
+* Multi-currency support
+* Automatic conversion to USD
+* Original currency and exchange rate preserved
+* Tax-inclusive and tax-exclusive validation support
+
+### 🔁 Duplicate Detection
+
+* Hard duplicate blocking (invoice-level)
+* Soft duplicate warning (logical similarity)
+
+### 🗃️ Storage and Management
+
+* SQLite database with normalized schema
+* Bill history view
+* Detailed bill inspection
+* Cascade deletion of line items
+
+### 📊 Analytics Dashboard
+
+* KPI metrics (total spend, average bill, vendors, transactions)
+* Monthly trend analysis
+* Vendor distribution
+* Payment method breakdown
+* Export to CSV, Excel, and PDF
+* Insight generation below charts
 
 ---
 
 ## 🧠 System Architecture
 
-### High-Level Data Flow
-
 ```
 Upload Document
-    ↓
-Ingestion & Hash-Based Change Detection
-    ↓
-Image Preprocessing (OCR Optimization)
-    ↓
-Gemini OCR (Structured JSON + Raw OCR Text)
-    ↓
-Field Extraction (Multi-Tier)
-    ├─ Tier 1: Gemini Structured Output
-    ├─ Tier 2: Regex-Based Extraction
-    └─ Tier 3: spaCy NER (Vendor Name)
-    ↓
-Normalization & Type Safety
-    ↓
-Currency Conversion → USD
-    ↓
-Validation (Amounts + Duplicates)
-    ↓
-SQLite Persistence
-    ↓
-Dashboard & History Views
+      ↓
+Ingestion and Hash Validation
+      ↓
+Image Preprocessing
+      ↓
+Gemini OCR (JSON + Raw Text)
+      ↓
+Multi-Tier Extraction
+      ↓
+Normalization and Currency Conversion
+      ↓
+Validation and Duplicate Detection
+      ↓
+SQLite Storage
+      ↓
+Dashboard and Analytics
 ```
 
 ---
 
 ## 🧰 Technology Stack
 
-| Layer            | Technology               |
-| ---------------- | ------------------------ |
-| Frontend         | Streamlit                |
-| OCR Engine       | Google Gemini 2.5 Flash  |
-| NLP / NER        | spaCy (`en_core_web_sm`) |
-| Image Processing | PIL, OpenCV              |
-| PDF Processing   | pdf2image                |
-| Database         | SQLite                   |
-| Analytics        | Pandas, Plotly           |
-| API Client       | google-genai SDK         |
-| Language         | Python 3.13+             |
+| Layer            | Technology              |
+| ---------------- | ----------------------- |
+| Frontend         | Streamlit               |
+| OCR Engine       | Google Gemini 2.5 Flash |
+| NLP / NER        | spaCy (en_core_web_sm)  |
+| Image Processing | PIL, OpenCV             |
+| PDF Processing   | pdf2image               |
+| Database         | SQLite                  |
+| Analytics        | Pandas, Plotly          |
+| Language         | Python 3.13+            |
 
 ---
 
@@ -93,282 +114,269 @@ Dashboard & History Views
 Receipt-and-Invoice-Digitizer/
 │
 ├── app.py                         # Main Streamlit application
-├── dashboard.py                   # Analytics dashboard
 ├── receipt_invoice.db             # SQLite database (auto-generated)
-├── .env                           # Environment variables (API keys)
-│
-├── .streamlit/                    # Streamlit configuration
-├── src/
-│   ├── ingestion.py               # File ingestion & hashing
-│   ├── preprocessing.py           # Image preprocessing
-│   ├── ocr.py                     # Gemini OCR orchestration
-│   ├── validation.py              # Amount + duplicate validation
-│   ├── duplicate.py               # Logical duplicate detection
-│   ├── database.py                # SQLite persistence
-│   │
-│   └── extraction/
-│       ├── field_extractor.py     # Regex-based extraction
-│       ├── vendor_extractor_spacy.py  # spaCy NER vendor extraction
-│       ├── normalizer.py          # Data normalization
-│       └── currency_converter.py  # Currency conversion to USD
-│
-├── data/                          # Sample data directory
-├── documents/                     # Document storage
-├── static/                        # Static assets
 ├── requirements.txt
+├── steps_pull.md                  # Team workflow notes
 ├── README.md
-└── .gitignore
+│
+├── data/                          # Sample data
+├── documents/                     # Uploaded documents
+├── milestone files/               # Milestone deliverables
+├── static/                        # Static assets
+│
+└── src/
+    ├── __init__.py
+    ├── admin_page.py              # Admin tools and maintenance UI
+    ├── ingestion.py               # File ingestion and hashing
+    ├── preprocessing.py           # Image preprocessing
+    ├── ocr.py                     # Gemini OCR orchestration
+    ├── validation.py              # Amount and duplicate validation
+    ├── duplicate.py               # Logical duplicate detection
+    ├── database.py                # SQLite persistence
+    │
+    ├── extraction/
+    │   ├── __init__.py
+    │   ├── field_extractor.py     # Regex-based extraction
+    │   ├── regex_patterns.py      # Regex patterns library
+    │   ├── vendor_extractor_spacy.py  # spaCy NER vendor extraction
+    │   ├── template_parser.py     # Vendor template parsing
+    │   ├── templates/             # Vendor templates (JSON)
+    │   ├── normalizer.py          # Data normalization
+    │   └── currency_converter.py  # Currency conversion to USD
+    │
+    └── dashboard/
+        ├── analytics.py           # KPI and aggregation logic
+        ├── charts.py              # Plotly chart builders
+        ├── insights.py            # Narrative insights from data
+        ├── exports.py             # CSV, Excel, PDF exports
+        └── dashboard_page.py      # Streamlit dashboard UI
 ```
 
 ---
 
-## 🔍 Core Design Principles
+## 🧩 Dashboard Module (src/dashboard)
 
-* **Fail-safe over fail-fast**
-* **Never trust OCR blindly**
-* **No silent data corruption**
-* **Deterministic fallbacks**
-* **Session-safe Streamlit design**
-* **Database-ready normalized output**
+The dashboard package is intentionally separated into layers:
+
+* analytics.py: KPI calculations and aggregations (no Streamlit code)
+* charts.py: Plotly chart builders with shared theming
+* insights.py: Short narrative insights derived from chart data
+* exports.py: CSV, Excel, and PDF export helpers
+* dashboard_page.py: Streamlit UI with filters, KPIs, charts, and tables
 
 ---
 
-## 🔄 Multi-Tier Extraction Strategy
+## 🧪 Multi-Tier Extraction Strategy
 
-### Why Multi-Tier?
+OCR is probabilistic. This system reduces failure risk using layered extraction.
 
-OCR systems are probabilistic. This project avoids brittle assumptions by layering extraction logic:
+* Tier 1: Gemini AI structured JSON extraction
+* Tier 2: Regex fallback for missing fields
+* Tier 3: spaCy NER vendor detection (ORG entities)
+* Tier 4: Vendor template parsing (when a template exists)
 
-#### Tier 1 – Gemini AI (Primary)
+---
 
-* Structured JSON extraction
-* Semantic understanding
-* Fast and accurate in most cases
+## 🧩 Template-Based Parsing
 
-#### Tier 2 – Regex Fallback
+Vendor templates live under [src/extraction/templates/](src/extraction/templates/) and are applied when
+fallback is triggered and a vendor match exists.
 
-* Deterministic recovery
-* Handles missing or weak fields
-* Used only when Tier 1 is unreliable
+Template schema:
 
-#### Tier 3 – spaCy Named Entity Recognition
+```json
+{
+      "vendor_key": "VENDORKEY",
+      "aliases": ["VENDOR NAME", "VENDOR-ALIAS"],
+      "static_fields": {
+            "vendor_name": "VENDOR NAME"
+      },
+      "fields": {
+            "invoice_number": { "patterns": ["regex", "regex"] },
+            "purchase_date": { "patterns": ["regex", "regex"] },
+            "purchase_time": { "patterns": ["regex"] },
+            "subtotal": { "label_patterns": ["regex_label"] },
+            "tax_amount": { "label_patterns": ["regex_label"] },
+            "total_amount": { "label_patterns": ["regex_label"] }
+      },
+      "line_items": {
+            "start_markers": ["regex_label"],
+            "end_markers": ["regex_label"],
+            "line_pattern": "regex_with_named_groups"
+      }
+}
+```
 
-* ML-based vendor name extraction
-* Detects `ORG` entities from OCR text
-* Robust to formatting noise and OCR errors
+Notes:
 
-> ❌ No heuristic scoring
-> ❌ No rule-based NLP hacks
-> ✅ Only ML-backed NER where needed
+- `vendor_key` is the canonical key for a template.
+- `aliases` are matched after normalization (uppercased, non-alphanumerics removed).
+- `patterns` extract the first capture group match from OCR text.
+- `label_patterns` extract a numeric amount that follows a label.
+- `line_pattern` should include named groups like `item_name`, `quantity`, `unit_price`, `item_total`.
 
 ---
 
 ## 💱 Currency Handling
 
-* Supports INR, EUR, GBP, MYR, USD (extensible)
-* Converts **all monetary values to USD**
-* Preserves:
-
-  * Original currency
-  * Original total amount
-  * Exchange rate used
-* Ensures analytics consistency across regions
+* Supports INR, USD, EUR, GBP, MYR (extensible)
+* Converts analytics to USD
+* Preserves original currency, original amount, and exchange rate
 
 ---
 
-## ✅ Validation Logic
+## ✅ Validation Strategy
 
-### Amount Validation
-
-Supports both:
-
-* **Tax-inclusive pricing**
-* **Tax-exclusive pricing**
-
-Accepts data if **either model matches** within tolerance (±0.02).
-
-### Duplicate Detection
-
-* **Hard Duplicate**
-
-  * Invoice number + vendor + date + amount
-  * Blocks save
-* **Soft Duplicate**
-
-  * Vendor + date + amount
-  * Warns but prevents accidental duplication
+* Amount validation accepts tax-inclusive or tax-exclusive totals within tolerance (±0.02)
+* Hard duplicates are blocked, soft duplicates are warned
 
 ---
 
-## 🗃️ Database Schema
+## 🔐 Security and Stability
 
-### Bills Table
-
-```sql
-CREATE TABLE bills (
-    bill_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER DEFAULT 1,
-    invoice_number VARCHAR(100),
-    vendor_name VARCHAR(255) NOT NULL,
-    purchase_date DATE NOT NULL,
-    purchase_time TIME,
-    subtotal DECIMAL(10, 2),
-    tax_amount DECIMAL(10, 2),
-    total_amount DECIMAL(10, 2),
-    currency VARCHAR(10),
-    original_currency VARCHAR(10),
-    original_total_amount DECIMAL(10, 2),
-    exchange_rate DECIMAL(10, 6),
-    payment_method VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Line Items Table
-
-```sql
-CREATE TABLE lineitems (
-    item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    bill_id INTEGER NOT NULL,
-    description TEXT,
-    quantity INTEGER,
-    unit_price DECIMAL(10, 2),
-    total_price DECIMAL(10, 2),
-    FOREIGN KEY (bill_id) REFERENCES bills(bill_id) ON DELETE CASCADE
-);
-```
+* File size and PDF page limits enforced
+* SHA-256 file hashing
+* Parameterized SQLite queries
+* Defensive JSON parsing
+* API keys never stored in the database
+* Graceful error handling across layers
 
 ---
 
-## 🧪 Error Handling Strategy
-
-| Layer         | Strategy                        |
-| ------------- | ------------------------------- |
-| Ingestion     | File size & format validation   |
-| Preprocessing | Safe fallback to original image |
-| OCR           | Graceful API failure handling   |
-| Extraction    | Regex & NLP recovery            |
-| Validation    | Non-destructive warnings        |
-| Database      | Transaction rollback on failure |
-
----
-
-## � Getting Started
+## ⚙️ Getting Started
 
 ### Prerequisites
 
-* Python 3.13 or higher
-* Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey))
+* Python 3.13+
+* Google Gemini API key
 * poppler-utils (for PDF processing)
 
-### Installation
+### Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/Receipt-and-Invoice-Digitizer.git
-   cd Receipt-and-Invoice-Digitizer
-   ```
+```bash
+git clone https://github.com/yourusername/Receipt-and-Invoice-Digitizer.git
+cd Receipt-and-Invoice-Digitizer
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+```
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+Set your API key using the `GOOGLE_API_KEY` environment variable, or enter it in the app sidebar.
 
-3. **Download spaCy model**
-   ```bash
-   python -m spacy download en_core_web_sm
-   ```
+Run the app:
 
-4. **Configure API key**
-   
-   Create a `.env` file in the project root:
-   ```env
-   GOOGLE_API_KEY="your_gemini_api_key_here"
-   ```
-   
-   Alternatively, enter your API key in the sidebar when running the app.
+```bash
+streamlit run app.py
+```
 
-5. **Run the application**
-   ```bash
-   streamlit run app.py
-   ```
+Open:
 
-6. **Access the app**
-   
-   Open your browser and navigate to `http://localhost:8501`
-
-### Usage
-
-1. **Dashboard**: View spending analytics, charts, and financial insights
-2. **Upload & Process**: Upload receipts/invoices and digitize them using AI
-3. **History**: Browse all saved bills, view details, and manage records
-
----
-
-## �🔐 Security & Stability
-
-* File size limits enforced (5MB)
-* PDF page limits enforced
-* No API keys logged or stored
-* No untrusted file writes
-* Hash-based file change detection
-* Defensive JSON parsing
-* SQLite parameterized queries
+```
+http://localhost:8501
+```
 
 ---
 
 ## 📊 Dashboard Capabilities
 
-* **Financial Metrics**
-  * Total spending overview
-  * Average bill value
-  * Monthly spending trends
-  * Number of vendors and transactions
-* **Visual Analytics**
-  * Vendor-wise spending charts
-  * Time-based trend analysis
-  * Category breakdowns
-* **Bill Management**
-  * Historical audit table
-  * Detailed bill inspection
-  * Delete bills with cascade removal of line items
-  * Data export capabilities
+* Spending KPIs
+* Monthly trend visualization
+* Vendor and payment distribution
+* Transaction distribution analysis
+* Year-over-year comparison
+* Insight generation below charts
+* CSV, Excel, and PDF exports
 
 ---
 
-## 🛣️ Future Enhancements
+## 🛣️ Future Roadmap
 
 * Multi-user authentication
-* Manual bill editing interface
-* Batch uploads
-* Enhanced export (CSV/Excel/PDF)
-* Expense categorization
 * Budget tracking and alerts
-* Mobile-optimized responsive UI
-* Vendor templates and auto-fill
-* OCR confidence scoring
+* Expense categorization
+* Mobile-optimized UI
 * Advanced filtering and search
-* API endpoints for integrations
+* REST API integration
+* Batch uploads
+* Manual editing interface
 
 ---
 
 ## 🏁 Current Status
 
-**Version**: `v1.0.0`  
-**Last Updated**: January 2026
+**Version:** v1.0
+**Status:** Stable, production-ready architecture
 
-**Milestones Completed**:
+Completed:
 
-* ✅ Core ingestion & OCR pipeline
-* ✅ Multi-tier extraction (Gemini + Regex + spaCy)
-* ✅ Validation & duplicate detection
-* ✅ Multi-currency conversion to USD
-* ✅ SQLite persistence with indexes
-* ✅ Dashboard with analytics and charts
-* ✅ History view with detailed bill inspection
-* ✅ Bill deletion with cascade operations
-* ✅ Environment-based API key management
+* Multi-tier extraction
+* Validation and duplicate detection
+* Currency normalization
+* SQLite persistence
+* Analytics dashboard
+* Export functionality
+* Modular codebase structure
 
 ---
 
+## 📌 Design Philosophy
 
+* Never trust OCR blindly
+* Fail safe, not silently
+* No data corruption
+* Deterministic fallbacks
+* Modular, scalable architecture
+
+---
+
+### 5️⃣ Install spaCy Model
+
+```bash
+python -m spacy download en_core_web_sm
+```
+
+---
+
+### 6️⃣ Configure API Key
+
+Set `GOOGLE_API_KEY` in your environment or enter the API key inside the application sidebar.
+
+---
+
+### 7️⃣ Run the Application
+
+```bash
+streamlit run app.py
+```
+
+Open in browser:
+
+```
+http://localhost:8501
+```
+
+---
+
+## 🔹 Optional: Export Conda Environment
+
+To reproduce the exact environment:
+
+```bash
+conda env export --no-builds > environment.yml
+```
+
+To recreate:
+
+```bash
+conda env create -f environment.yml
+conda activate ridvenv
+```
+
+---
+
+This ensures:
+
+* Dependency stability
+* Reproducible development environment
+* Clean team collaboration
+
+---

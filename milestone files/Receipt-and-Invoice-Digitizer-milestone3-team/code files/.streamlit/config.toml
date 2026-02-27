@@ -1,0 +1,20 @@
+[theme]
+# Primary accent color (The "Submit" buttons and highlights)
+primaryColor = "#2563EB" 
+
+# Background color (Leave empty to let Streamlit switch automatically between white/black)
+# backgroundColor = "#FFFFFF" 
+
+# Secondary background color (Sidebar and widgets)
+# secondaryBackgroundColor = "#F3F4F6"
+
+# Text color
+# textColor = "#1F2937" 
+
+# Font family
+font = "sans serif"
+
+[server]
+enableStaticServing = true
+maxUploadSize = 5
+
